@@ -1,0 +1,7 @@
+This directory will contain product images:
+- receipt-flow.png
+- knowledge-portal.png
+- hub-planner.png
+- default-product.png
+
+You should add actual images to this directory.

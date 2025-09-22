@@ -1,0 +1,59 @@
+{
+  "name": "sso-gateway",
+  "version": "1.0.0",
+  "description": "SSO Gateway with Auth0 integration for multiple products - Vercel Deployment",
+  "main": "api/index.js",
+  "scripts": {
+    "dev": "nodemon server.js",
+    "start": "node server.js",
+    "build": "echo 'Build completed'",
+    "test": "jest",
+    "lint": "eslint src/",
+    "lint:fix": "eslint src/ --fix",
+    "vercel:dev": "vercel dev",
+    "vercel:deploy": "vercel --prod"
+  },
+  "keywords": [
+    "sso",
+    "auth0",
+    "authentication",
+    "gateway",
+    "nodejs",
+    "express",
+    "vercel",
+    "serverless"
+  ],
+  "author": "Your Company",
+  "license": "MIT",
+  "dependencies": {
+    "axios": "^1.6.2",
+    "compression": "^1.7.4",
+    "cookie-parser": "^1.4.6",
+    "cors": "^2.8.5",
+    "dotenv": "^16.3.1",
+    "express": "^4.18.2",
+    "express-openid-connect": "^2.17.1",
+    "express-rate-limit": "^7.1.5",
+    "express-session": "^1.17.3",
+    "express-validator": "^7.0.1",
+    "helmet": "^7.1.0",
+    "jsonwebtoken": "^9.0.2",
+    "jwks-rsa": "^3.1.0",
+    "winston": "^3.11.0"
+  },
+  "devDependencies": {
+    "@vercel/node": "^4.0.0",
+    "eslint": "^8.55.0",
+    "eslint-config-standard": "^17.1.0",
+    "eslint-plugin-import": "^2.29.0",
+    "eslint-plugin-node": "^11.1.0",
+    "eslint-plugin-promise": "^6.1.1",
+    "jest": "^29.7.0",
+    "nodemon": "^3.0.2",
+    "supertest": "^6.3.3",
+    "vercel": "^48.1.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

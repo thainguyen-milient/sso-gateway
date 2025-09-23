@@ -194,10 +194,10 @@ app.get('/auth/sso-callback', (req, res) => {
     // Store token in HTTP-only cookie
     res.cookie('access_token', token, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
+      secure: true,
+      sameSite: 'none',
       maxAge: 24 * 60 * 60 * 1000, // 24 hours,
-      domain: process.env.NODE_ENV === 'production' ? '.receipt-flow.io.vn' : undefined,
+      domain: '.receipt-flow.io.vn'
     });
     
     // Redirect to dashboard or return URL

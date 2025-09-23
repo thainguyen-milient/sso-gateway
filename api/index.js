@@ -85,14 +85,17 @@ app.use(cookieParser());
 
 // Session middleware for serverless environment
 const session = require('express-session');
+const { http } = require('winston');
 app.use(session({
   secret: process.env.SESSION_SECRET || 'your-secret-key',
   resave: false,
   saveUninitialized: false,
   cookie: { 
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'lax',
-    maxAge: 24 * 60 * 60 * 1000 // 24 hours
+    secure: true,
+    sameSite: 'none',
+    maxAge: 24 * 60 * 60 * 1000,
+    domain: '.receipt-flow.io.vn',
+    httpOnly: true
   },
   // For serverless, we need to handle session storage differently
   // In production, consider using a proper session store like Redis
@@ -135,8 +138,11 @@ const config = {
     rollingDuration: 24 * 60 * 60, // 24 hours
     absoluteDuration: 7 * 24 * 60 * 60, // 7 days
     cookie: {
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'Lax',
+      secure: true,
+      sameSite: 'none',
+      httpOnly: true,
+      maxAge: 24 * 60 * 60 * 1000, // 24 hours
+      domain: '.receipt-flow.io.vn'
     },
   },
   routes: {

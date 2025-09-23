@@ -79,15 +79,17 @@ app.use(cookieParser());
 
 // Session middleware
 const session = require('express-session');
+const { http } = require('winston');
 const sessionConfig = {
   secret: process.env.SESSION_SECRET || 'your-secret-key',
   resave: false,
   saveUninitialized: true,
   cookie: { 
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+    secure: true,
+    sameSite: 'none',
     maxAge: 24 * 60 * 60 * 1000, // 24 hours
-    domain: '.receipt-flow.io.vn'
+    domain: '.receipt-flow.io.vn',
+    httpOnly: true,
   }
 };
 

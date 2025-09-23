@@ -113,14 +113,10 @@ router.get('/logout', (req, res) => {
   const clearCookieOptions = {
     path: '/',
     httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax'
+    secure: true,
+    sameSite: 'none',
+    domain: '.receipt-flow.io.vn'
   };
-  
-  if (process.env.NODE_ENV === 'production') {
-    clearCookieOptions.domain = '.receipt-flow.io.vn';
-  }
-  
   // Clear access token cookie
   res.clearCookie('access_token', clearCookieOptions);
   
@@ -131,8 +127,9 @@ router.get('/logout', (req, res) => {
   const auth0CookieOptions = {
     path: '/',
     httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax'
+    secure: true,
+    sameSite: 'none',
+    domain: '.receipt-flow.io.vn'
   };
   
   res.clearCookie('appSession', auth0CookieOptions);
@@ -176,13 +173,10 @@ router.get('/global-logout', (req, res) => {
       const clearOptions = {
         path: '/',
         httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+        secure: true,
+        sameSite: 'none',
+        domain: '.receipt-flow.io.vn'
       };
-      
-      if (domain !== 'localhost') {
-        clearOptions.domain = domain;
-      }
       
       res.clearCookie(cookieName, clearOptions);
     });

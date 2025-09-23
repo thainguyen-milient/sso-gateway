@@ -38,7 +38,8 @@ router.get('/login', (req, res) => {
 
 /**
  * GET /auth/callback
- * Auth0 callback handler
+ * Auth0 callback handler - this will be handled by Auth0 middleware first
+ * This route acts as a post-callback processor
  */
 router.get('/callback', requiresAuth(), async (req, res) => {
   try {

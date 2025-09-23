@@ -50,7 +50,7 @@ async function main() {
     BASE_URL: baseUrl,
     SESSION_SECRET: sessionSecret,
     JWT_SECRET: jwtSecret,
-    NODE_ENV: 'production',
+    NODE_ENV: 'development', // or 'production'
     
     // Optional variables
     ALLOWED_ORIGINS: allowedOrigins,

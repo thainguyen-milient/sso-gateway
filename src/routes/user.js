@@ -35,7 +35,7 @@ router.get('/products', requireAuth, asyncHandler(async (req, res) => {
         'product2': process.env.PRODUCT2_URL || 'http://localhost:3004',
         'product3': process.env.PRODUCT3_URL || 'http://localhost:3003',
         'pluriell': process.env.PLURIELL_URL || 'https://pluriell.receipt-flow.io.vn',
-        'receipt': process.env.RECEIPT_URL || 'https://receipt-flow.io.vn',
+        'receipt': process.env.RECEIPT_URL || 'https://receipt.receipt-flow.io.vn',
       };
       
       const productNames = {

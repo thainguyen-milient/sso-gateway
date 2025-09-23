@@ -365,7 +365,7 @@ function getProductRedirectUrl(productId, accessToken) {
     'product2': process.env.PRODUCT2_URL || 'http://localhost:3002',
     'product3': process.env.PRODUCT3_URL || 'http://localhost:3003',
     'pluriell': process.env.PLURIELL_URL || 'https://pluriell.receipt-flow.io.vn',
-    'receipt': process.env.RECEIPT_URL || 'https://receipt-flow.io.vn',
+    'receipt': process.env.RECEIPT_URL || 'https://receipt.receipt-flow.io.vn',
   };
 
   const baseUrl = productUrls[productId] || process.env.BASE_URL;

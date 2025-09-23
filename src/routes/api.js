@@ -324,7 +324,7 @@ router.post('/global-logout', asyncHandler(async (req, res) => {
   // Get all connected product URLs
   const connectedProducts = [
     process.env.PLURIELL_URL || 'https://pluriell.receipt-flow.io.vn',
-    process.env.RECEIPT_URL || 'https://receipt-flow.io.vn',
+    process.env.RECEIPT_URL || 'https://receipt.receipt-flow.io.vn',
     // Add other products as needed
   ];
   

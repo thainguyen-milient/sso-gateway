@@ -25,11 +25,11 @@ router.get('/login', (req, res) => {
   
   // Store return URL in session
   req.session.returnTo = returnTo;
-  console.log('ReturnTo URL:', `http://localhost:3000/auth/callback`);
+  console.log('ReturnTo URL:', `${process.env.BASE_URL}/auth/callback`);
   res.oidc.login({
     returnTo: '/auth/callback',
     authorizationParams: {
-      redirect_uri: `http://localhost:3000/auth/callback`,
+      redirect_uri: `${process.env.BASE_URL}/auth/callback`,
       scope: 'openid profile email',
       audience: process.env.AUTH0_AUDIENCE,
     },
@@ -48,7 +48,7 @@ router.get('/callback', requiresAuth(), async (req, res) => {
     const productId = req.session?.productId;
     const returnTo = req.session?.returnTo || '/';
     
-    console.log('User authenticated successfullyy', {
+    logger.info('User authenticated successfullyy', {
       userId: user.sub,
       email: user.email,
       productId,
@@ -108,7 +108,7 @@ router.get('/logout', (req, res) => {
   res.clearCookie('access_token');
   
   // Log user out
-  console.log('User logged out', {
+  logger.info('User logged out', {
     userId: req.oidc.user?.sub,
     email: req.oidc.user?.email,
   });

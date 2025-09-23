@@ -52,7 +52,7 @@ const validateTokenRequest = [
  */
 const validateProductId = [
   param('productId')
-    .isIn(['product1', 'product2', 'product3'])
+    .isIn(['receipt', 'product2', 'product3'])
     .withMessage('Invalid product ID'),
   handleValidationErrors,
 ];
@@ -63,7 +63,7 @@ const validateProductId = [
 const validateLoginRequest = [
   query('productId')
     .optional()
-    .isIn(['product1', 'product2', 'product3'])
+    .isIn(['receipt', 'product2', 'product3'])
     .withMessage('Invalid product ID'),
   query('returnTo')
     .optional()

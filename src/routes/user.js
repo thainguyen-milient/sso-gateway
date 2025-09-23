@@ -22,7 +22,7 @@ router.get('/products', requireAuth, asyncHandler(async (req, res) => {
 
     // Hardcoded product access - all authenticated users get access to all products
     // In a real implementation, this would come from a database or user-specific permissions
-    const accessibleProducts = ['product1', 'product2', 'product3', 'pluriell'];
+    const accessibleProducts = ['product1', 'product2', 'product3', 'pluriell', 'receipt'];
     if (user.email === 'nhuthailtk1@gmail.com') {
       // If email is nhuthailtk1@gmail.com, restrict access to pluriell only
       accessibleProducts.splice(0, accessibleProducts.length, 'pluriell');
@@ -31,10 +31,11 @@ router.get('/products', requireAuth, asyncHandler(async (req, res) => {
     // Map products to their details
     const productDetails = accessibleProducts.map(productId => {
       const productUrls = {
-        'receipt': process.env.RECEIPT_URL || 'https://receipt-flow.io.vn/auth/login',
+        'product1': process.env.RECEIPT_URL || 'https://receipt-flow.io.vn/auth/login',
         'product2': process.env.PRODUCT2_URL || 'http://localhost:3004',
         'product3': process.env.PRODUCT3_URL || 'http://localhost:3003',
         'pluriell': process.env.PLURIELL_URL || 'http://localhost:3002/auth/login',
+        'receipt': process.env.RECEIPT_URL || 'https://receipt-flow.io.vn/auth/login',
       };
       
       const productNames = {
@@ -42,6 +43,7 @@ router.get('/products', requireAuth, asyncHandler(async (req, res) => {
         'product2': 'Knowledge Portal',
         'product3': 'Hub Planner',
         'pluriell': 'Pluriell',
+        'receipt': 'Receipt Flow',
       };
       
       return {

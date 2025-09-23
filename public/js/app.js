@@ -105,7 +105,8 @@ document.addEventListener('DOMContentLoaded', () => {
             'product1': 'https://www.milientsoftware.com/hs-fs/hubfs/Images/Pictures%20of%20the%20systems/Moment%20system/resurs_planering_moment.png?width=800&height=430&name=resurs_planering_moment.png',
             'product2': 'https://www.milientsoftware.com/hs-fs/hubfs/Flo10/Product%20Images/Flo10%20Homepage.png?width=800&height=430&name=Flo10%20Homepage.png',
             'product3': 'https://www.milientsoftware.com/hs-fs/hubfs/Product%20images/Millnet%20systems/timereporting_tfs_en-small.png?width=800&height=430&name=timereporting_tfs_en-small.png',
-            'default': 'https://www.milientsoftware.com/hs-fs/hubfs/Pluriell/Pluriell_system-1.png?width=495&height=300&name=Pluriell_system-1.png'
+            'default': 'https://www.milientsoftware.com/hs-fs/hubfs/Pluriell/Pluriell_system-1.png?width=495&height=300&name=Pluriell_system-1.png',
+            'receipt': 'https://www.milientsoftware.com/hs-fs/hubfs/Pluriell/Pluriell_system-1.png?width=495&height=300&name=Pluriell_system-1.png'
         };
 
         // Product names (prettier display names)
@@ -113,7 +114,8 @@ document.addEventListener('DOMContentLoaded', () => {
             'product1': 'Receipt Flow',
             'product2': 'Knowledge Portal',
             'product3': 'Hub Planner',
-            'pluriell': 'Pluriell'
+            'pluriell': 'Pluriell',
+            'receipt': 'Receipt Flow',
         };
 
         products.forEach(product => {

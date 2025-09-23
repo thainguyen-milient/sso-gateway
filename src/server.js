@@ -38,11 +38,24 @@ app.use(compression());
 // CORS configuration
 const corsOptions = {
   origin: function (origin, callback) {
-    const allowedOrigins = process.env.ALLOWED_ORIGINS?.split(',') || ['http://localhost:3000'];
-    if (!origin || allowedOrigins.includes(origin)) {
+    // Default local origins plus add your Vercel domains
+    const allowedOrigins = process.env.ALLOWED_ORIGINS?.split(',') || [
+      'http://localhost:3000',
+      'http://localhost:3001',
+      'http://localhost:3002',
+      'https://sso-gateway-vercel.vercel.app',
+      'https://pruiell-simulator-vercel.vercel.app',
+      'https://windsurf-project-vercel.vercel.app',
+      // Add all your Vercel domains here
+    ];
+    
+    console.log('CORS request from:', origin);
+    console.log('Allowed origins:', allowedOrigins);
+    
+    if (!origin || allowedOrigins.includes(origin) || allowedOrigins.includes('*')) {
       callback(null, true);
     } else {
-      callback(new Error('Not allowed by CORS'));
+      callback(new Error(`Not allowed by CORS: ${origin}`));
     }
   },
   credentials: true,

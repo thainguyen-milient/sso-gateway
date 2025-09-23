@@ -69,11 +69,11 @@ router.get('/callback', requiresAuth(), async (req, res) => {
 
     const accessToken = generateToken(tokenPayload);
     
-    // Set token as HTTP-only cookie
+    // Set token as HTTP-only cookie with cross-domain support
     res.cookie('access_token', accessToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
+      sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax', // Use 'none' in production for cross-domain
       maxAge: 24 * 60 * 60 * 1000, // 24 hours
     });
 

@@ -50,7 +50,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Add logout button event listener
         document.getElementById('logoutBtn').addEventListener('click', () => {
-            window.location.href = `${API_BASE_URL}/auth/logout?returnTo=${encodeURIComponent(window.location.href)}`;
+            // Use global logout for better cross-domain logout
+            window.location.href = `${API_BASE_URL}/auth/global-logout?returnTo=${encodeURIComponent(window.location.href)}`;
         });
     }
 

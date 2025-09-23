@@ -119,6 +119,9 @@ const config = {
   session: {
     rollingDuration: 24 * 60 * 60, // 24 hours
   },
+  routes: {
+    logout: '/auth/auth0-logout' // Use a different route to avoid conflicts
+  },
 };
 
 // Auth0 middleware

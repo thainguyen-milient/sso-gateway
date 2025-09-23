@@ -113,12 +113,44 @@ router.get('/callback', requiresAuth(), async (req, res) => {
 router.get('/logout', (req, res) => {
   const returnTo = req.query.returnTo || process.env.BASE_URL;
   
-  // Clear access token cookie with proper domain configuration
-  const clearCookieOptions = {};
+  // Clear all possible cookies with proper domain configuration
+  const clearCookieOptions = {
+    path: '/',
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax'
+  };
+  
   if (process.env.NODE_ENV === 'production') {
     clearCookieOptions.domain = '.receipt-flow.io.vn';
   }
+  
+  // Clear access token cookie
   res.clearCookie('access_token', clearCookieOptions);
+  
+  // Clear other possible cookies
+  res.clearCookie('sso_token', clearCookieOptions);
+  
+  // Clear Auth0 session cookies (without domain for Auth0)
+  const auth0CookieOptions = {
+    path: '/',
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax'
+  };
+  
+  res.clearCookie('appSession', auth0CookieOptions);
+  res.clearCookie('appSession.0', auth0CookieOptions);
+  res.clearCookie('appSession.1', auth0CookieOptions);
+  
+  // Clear session if it exists
+  if (req.session) {
+    req.session.destroy((err) => {
+      if (err) {
+        logger.error('Session destruction error:', err);
+      }
+    });
+  }
   
   // Log user out
   logger.info('User logged out', {
@@ -126,9 +158,62 @@ router.get('/logout', (req, res) => {
     email: req.oidc.user?.email,
   });
 
+  // Use Auth0 logout
   res.oidc.logout({
     returnTo,
   });
+});
+
+/**
+ * GET /auth/global-logout
+ * Global logout that clears all cookies and sessions across all subdomains
+ */
+router.get('/global-logout', (req, res) => {
+  const returnTo = req.query.returnTo || process.env.BASE_URL;
+  
+  // Clear all cookies for all possible domains
+  const domains = ['.receipt-flow.io.vn', 'localhost'];
+  const cookieNames = ['access_token', 'sso_token', 'appSession', 'appSession.0', 'appSession.1'];
+  
+  domains.forEach(domain => {
+    cookieNames.forEach(cookieName => {
+      const clearOptions = {
+        path: '/',
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax'
+      };
+      
+      if (domain !== 'localhost') {
+        clearOptions.domain = domain;
+      }
+      
+      res.clearCookie(cookieName, clearOptions);
+    });
+  });
+  
+  // Clear session
+  if (req.session) {
+    req.session.destroy((err) => {
+      if (err) {
+        logger.error('Session destruction error:', err);
+      }
+    });
+  }
+  
+  logger.info('Global logout performed', {
+    userId: req.oidc.user?.sub,
+    email: req.oidc.user?.email,
+  });
+
+  // Redirect to Auth0 logout
+  if (req.oidc.isAuthenticated()) {
+    res.oidc.logout({
+      returnTo,
+    });
+  } else {
+    res.redirect(returnTo);
+  }
 });
 
 /**

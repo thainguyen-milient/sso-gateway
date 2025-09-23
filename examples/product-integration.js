@@ -196,7 +196,8 @@ app.get('/auth/sso-callback', (req, res) => {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
-      maxAge: 24 * 60 * 60 * 1000 // 24 hours
+      maxAge: 24 * 60 * 60 * 1000, // 24 hours,
+      domain: process.env.NODE_ENV === 'production' ? '.receipt-flow.io.vn' : undefined,
     });
     
     // Redirect to dashboard or return URL

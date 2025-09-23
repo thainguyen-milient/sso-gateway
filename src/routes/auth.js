@@ -75,12 +75,8 @@ router.get('/callback', requiresAuth(), async (req, res) => {
       secure: process.env.NODE_ENV === 'production',
       sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
       maxAge: 24 * 60 * 60 * 1000, // 24 hours
+      domain: process.env.NODE_ENV === 'production' ? '.receipt-flow.io.vn' : undefined,
     };
-    
-    // In production, set domain to allow sharing across subdomains
-    if (process.env.NODE_ENV === 'production') {
-      cookieOptions.domain = '.receipt-flow.io.vn';
-    }
     
     res.cookie('access_token', accessToken, cookieOptions);
 
@@ -181,7 +177,7 @@ router.get('/global-logout', (req, res) => {
         path: '/',
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
-        sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax'
+        sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
       };
       
       if (domain !== 'localhost') {

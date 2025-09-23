@@ -69,13 +69,20 @@ router.get('/callback', requiresAuth(), async (req, res) => {
 
     const accessToken = generateToken(tokenPayload);
     
-    // Set token as HTTP-only cookie
-    res.cookie('access_token', accessToken, {
+    // Set token as HTTP-only cookie with domain configuration for cross-subdomain sharing
+    const cookieOptions = {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
+      sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
       maxAge: 24 * 60 * 60 * 1000, // 24 hours
-    });
+    };
+    
+    // In production, set domain to allow sharing across subdomains
+    if (process.env.NODE_ENV === 'production') {
+      cookieOptions.domain = '.receipt-flow.io.vn';
+    }
+    
+    res.cookie('access_token', accessToken, cookieOptions);
 
     // Clear session data if session exists
     if (req.session) {
@@ -106,8 +113,12 @@ router.get('/callback', requiresAuth(), async (req, res) => {
 router.get('/logout', (req, res) => {
   const returnTo = req.query.returnTo || process.env.BASE_URL;
   
-  // Clear access token cookie
-  res.clearCookie('access_token');
+  // Clear access token cookie with proper domain configuration
+  const clearCookieOptions = {};
+  if (process.env.NODE_ENV === 'production') {
+    clearCookieOptions.domain = '.receipt-flow.io.vn';
+  }
+  res.clearCookie('access_token', clearCookieOptions);
   
   // Log user out
   logger.info('User logged out', {

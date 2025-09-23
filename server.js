@@ -39,7 +39,12 @@ app.use(compression());
 // CORS configuration
 const corsOptions = {
   origin: function (origin, callback) {
-    const allowedOrigins = process.env.ALLOWED_ORIGINS?.split(',') || ['http://localhost:3000', 'http://localhost:3002'];
+    const defaultOrigins = process.env.NODE_ENV === 'production' 
+      ? ['https://sso.receipt-flow.io.vn', 'https://pluriell.receipt-flow.io.vn', 'https://receipt.receipt-flow.io.vn']
+      : ['http://localhost:3000', 'http://localhost:3001', 'http://localhost:3002'];
+    
+    const allowedOrigins = process.env.ALLOWED_ORIGINS?.split(',') || defaultOrigins;
+    
     if (!origin || allowedOrigins.includes(origin)) {
       callback(null, true);
     } else {
@@ -74,15 +79,23 @@ app.use(cookieParser());
 
 // Session middleware
 const session = require('express-session');
-app.use(session({
+const sessionConfig = {
   secret: process.env.SESSION_SECRET || 'your-secret-key',
   resave: false,
   saveUninitialized: true,
   cookie: { 
     secure: process.env.NODE_ENV === 'production',
+    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
     maxAge: 24 * 60 * 60 * 1000 // 24 hours
   }
-}));
+};
+
+// In production, set domain for cross-subdomain session sharing
+if (process.env.NODE_ENV === 'production') {
+  sessionConfig.cookie.domain = '.receipt-flow.io.vn';
+}
+
+app.use(session(sessionConfig));
 
 // Serve static files from the public directory
 app.use(express.static('public'));

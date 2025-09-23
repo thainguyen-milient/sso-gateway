@@ -89,7 +89,7 @@ router.get('/callback', requiresAuth(), async (req, res) => {
       httpOnly: true,
       secure: true, // Always use secure for production domains
       sameSite: 'none', // Required for cross-domain cookies
-      domain: 'receipt-flow.io.vn', // No leading dot - modern browsers will share with subdomains
+      domain: '.receipt-flow.io.vn', // Leading dot for cross-subdomain sharing
       path: '/',
       maxAge: 24 * 60 * 60 * 1000, // 24 hours
     });
@@ -99,7 +99,7 @@ router.get('/callback', requiresAuth(), async (req, res) => {
       httpOnly: false,
       secure: true, // Always use secure for production domains
       sameSite: 'none', // Required for cross-domain cookies
-      domain: 'receipt-flow.io.vn', // No leading dot - modern browsers will share with subdomains
+      domain: '.receipt-flow.io.vn', // Leading dot for cross-subdomain sharing
       path: '/',
       maxAge: 24 * 60 * 60 * 1000 // 24 hours
     });
@@ -107,8 +107,19 @@ router.get('/callback', requiresAuth(), async (req, res) => {
     // Set additional cookies for direct access on each subdomain
     // This ensures cookies are accessible even if domain sharing fails
     if (productId === 'pluriell') {
+      // Set cookie specific to pluriell subdomain
       res.cookie('pluriell_token', accessToken, {
         httpOnly: true,
+        secure: true,
+        sameSite: 'none',
+        domain: 'pluriell.receipt-flow.io.vn', // Specific to this subdomain
+        path: '/',
+        maxAge: 24 * 60 * 60 * 1000
+      });
+      
+      // Also set client-accessible version
+      res.cookie('pluriell_token_client', accessToken, {
+        httpOnly: false,
         secure: true,
         sameSite: 'none',
         domain: 'pluriell.receipt-flow.io.vn',
@@ -116,11 +127,22 @@ router.get('/callback', requiresAuth(), async (req, res) => {
         maxAge: 24 * 60 * 60 * 1000
       });
     } else if (productId === 'receipt') {
+      // Set cookie specific to receipt subdomain
       res.cookie('receipt_token', accessToken, {
         httpOnly: true,
         secure: true,
         sameSite: 'none',
-        domain: 'receipt-flow.io.vn',
+        domain: 'receipt.receipt-flow.io.vn', // Updated to match the new subdomain
+        path: '/',
+        maxAge: 24 * 60 * 60 * 1000
+      });
+      
+      // Also set client-accessible version
+      res.cookie('receipt_token_client', accessToken, {
+        httpOnly: false,
+        secure: true,
+        sameSite: 'none',
+        domain: 'receipt.receipt-flow.io.vn',
         path: '/',
         maxAge: 24 * 60 * 60 * 1000
       });

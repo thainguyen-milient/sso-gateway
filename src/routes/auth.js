@@ -47,7 +47,7 @@ router.get('/callback', requiresAuth(), async (req, res) => {
     const productId = req.session?.productId;
     const returnTo = req.session?.returnTo || '/';
     
-    logger.info('User authenticated successfully', {
+    logger.info('User authenticated successfullyy', {
       userId: user.sub,
       email: user.email,
       productId,

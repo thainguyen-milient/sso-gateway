@@ -89,7 +89,19 @@ router.get('/callback', requiresAuth(), async (req, res) => {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax', // Use 'none' in production for cross-domain
+      domain: process.env.NODE_ENV === 'production' ? '.receipt-flow.io.vn' : undefined, // Use domain in production
+      path: '/',
       maxAge: 24 * 60 * 60 * 1000, // 24 hours
+    });
+    
+    // Also set a non-httpOnly cookie for client-side access
+    res.cookie('sso_token_client', accessToken, {
+      httpOnly: false,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+      domain: process.env.NODE_ENV === 'production' ? '.receipt-flow.io.vn' : undefined,
+      path: '/',
+      maxAge: 24 * 60 * 60 * 1000 // 24 hours
     });
 
     // Clear session data if session exists
@@ -123,9 +135,34 @@ router.get('/logout', (req, res) => {
   const returnTo = req.query.returnTo || process.env.BASE_URL;
   const isGlobalLogout = req.query.global === 'true';
   
-  // Clear all possible token cookies
+  // Cookie options for clearing in production
+  const cookieOptions = {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+    domain: process.env.NODE_ENV === 'production' ? '.receipt-flow.io.vn' : undefined,
+    path: '/'
+  };
+
+  const clientCookieOptions = {
+    httpOnly: false,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+    domain: process.env.NODE_ENV === 'production' ? '.receipt-flow.io.vn' : undefined,
+    path: '/'
+  };
+  
+  // Clear all possible token cookies with domain options
+  res.clearCookie('access_token', cookieOptions);
+  res.clearCookie('sso_token', cookieOptions);
+  res.clearCookie('sso_token_client', clientCookieOptions);
+  res.clearCookie('id_token', cookieOptions);
+  res.clearCookie('auth_token', cookieOptions);
+  
+  // Also try clearing without domain for local cookies
   res.clearCookie('access_token');
   res.clearCookie('sso_token');
+  res.clearCookie('sso_token_client');
   res.clearCookie('id_token');
   res.clearCookie('auth_token');
   

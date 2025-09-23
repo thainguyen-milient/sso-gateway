@@ -282,6 +282,15 @@ Adjusted for serverless environment:
 - Temporary workaround: Ignore the warning (it won't break functionality)
 - This warning appears because the default session store is not persistent across serverless function invocations
 
+**6. Global Logout Issues**
+- Symptom: User remains logged in to some applications after global logout
+- Check that all applications are using the same cookie domain settings
+- Verify that federated logout is enabled in Auth0 settings
+- Ensure all applications are redirecting to `/auth/logout?global=true`
+- Check browser console for cookie-related errors
+- Inspect cookies in browser developer tools to ensure they're being cleared
+- Test global logout flow from each connected application
+
 ### Debug Commands
 
 ```bash
@@ -311,6 +320,26 @@ vercel env ls
    - Specify exact origins
    - Avoid wildcards in production
    - Regularly review allowed origins
+
+4. **Cookie Settings for Cross-Domain Authentication**
+   - Use `sameSite: 'none'` for cross-domain cookies
+   - Set `secure: true` for all cookies in production
+   - Use `domain: '.receipt-flow.io.vn'` (with leading dot) to share cookies across subdomains
+   - Set `path: '/'` to ensure cookies are available across the entire site
+   - Use `httpOnly: true` for sensitive cookies to prevent JavaScript access
+   - For client-accessible cookies, set `httpOnly: false`
+   - Clear cookies with the same options they were set with
+   - Example cookie settings:
+   ```javascript
+   res.cookie('access_token', token, {
+     httpOnly: true,
+     secure: process.env.NODE_ENV === 'production',
+     sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+     domain: process.env.NODE_ENV === 'production' ? '.receipt-flow.io.vn' : undefined,
+     path: '/',
+     maxAge: 24 * 60 * 60 * 1000 // 24 hours
+   });
+   ```
 
 ## Performance Optimization
 

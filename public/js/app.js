@@ -133,7 +133,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     <h3 class="product-title">${displayName}</h3>
                     <p class="product-description">${product.description || 'Access this product with your current credentials.'}</p>
                     <div class="product-actions">
-                        <a href="${product.url}" class="btn btn-primary" target="_blank">Log in to ${displayName}</a>
+                        <a href="${product.url}" class="btn btn-primary">Log in to ${displayName}</a>
                     </div>
                 </div>
             `;

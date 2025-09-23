@@ -7,6 +7,15 @@ document.addEventListener('DOMContentLoaded', () => {
     // Base URL for API calls
     const API_BASE_URL = window.location.origin;
 
+    // Check for token in URL (from redirect)
+    const urlParams = new URLSearchParams(window.location.search);
+    const tokenFromUrl = urlParams.get('token');
+    if (tokenFromUrl) {
+        localStorage.setItem('sso_access_token', tokenFromUrl);
+        // Clean URL
+        window.history.replaceState({}, document.title, window.location.pathname);
+    }
+
     // Check if user is already authenticated
     checkAuthStatus();
 
@@ -18,6 +27,26 @@ document.addEventListener('DOMContentLoaded', () => {
     // Function to check authentication status
     async function checkAuthStatus() {
         try {
+            // First try with stored token
+            const storedToken = localStorage.getItem('sso_access_token');
+            if (storedToken) {
+                const response = await fetch(`${API_BASE_URL}/auth/status`, {
+                    headers: {
+                        'Authorization': `Bearer ${storedToken}`
+                    },
+                    credentials: 'include'
+                });
+                
+                const data = await response.json();
+                
+                if (data.authenticated) {
+                    showUserInfo(data.user);
+                    fetchUserProducts();
+                    return;
+                }
+            }
+
+            // Fallback to session-based auth
             const response = await fetch(`${API_BASE_URL}/auth/status`, {
                 credentials: 'include'
             });
@@ -25,15 +54,29 @@ document.addEventListener('DOMContentLoaded', () => {
             const data = await response.json();
             
             if (data.authenticated) {
-                // User is authenticated
+                // Get token for future use
+                try {
+                    const tokenResponse = await fetch(`${API_BASE_URL}/auth/token`, {
+                        credentials: 'include'
+                    });
+                    const tokenData = await tokenResponse.json();
+                    if (tokenData.success) {
+                        localStorage.setItem('sso_access_token', tokenData.accessToken);
+                    }
+                } catch (tokenError) {
+                    console.warn('Could not retrieve token:', tokenError);
+                }
+                
                 showUserInfo(data.user);
                 fetchUserProducts();
             } else {
                 // User is not authenticated
+                localStorage.removeItem('sso_access_token');
                 showLoginView();
             }
         } catch (error) {
             console.error('Error checking auth status:', error);
+            localStorage.removeItem('sso_access_token');
             showLoginView();
         }
     }
@@ -50,6 +93,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Add logout button event listener
         document.getElementById('logoutBtn').addEventListener('click', () => {
+            // Clear stored token
+            localStorage.removeItem('sso_access_token');
             // Use global logout for better cross-domain logout
             window.location.href = `${API_BASE_URL}/auth/global-logout?returnTo=${encodeURIComponent(window.location.href)}`;
         });

@@ -69,16 +69,10 @@ router.get('/callback', requiresAuth(), async (req, res) => {
 
     const accessToken = generateToken(tokenPayload);
     
-    // Set token as HTTP-only cookie with domain configuration for cross-subdomain sharing
-    const cookieOptions = {
-      httpOnly: true,
-      secure: true,
-      sameSite: 'none',
-      maxAge: 24 * 60 * 60 * 1000, // 24 hours
-      domain: '.receipt-flow.io.vn',
-    };
-    
-    res.cookie('access_token', accessToken, cookieOptions);
+    // Store token in session for later retrieval
+    if (req.session) {
+      req.session.accessToken = accessToken;
+    }
 
     // Clear session data if session exists
     if (req.session) {
@@ -92,7 +86,8 @@ router.get('/callback', requiresAuth(), async (req, res) => {
       return res.redirect(productRedirectUrl);
     }
 
-    res.redirect(returnTo);
+    // For direct SSO Gateway access, redirect to dashboard with token
+    res.redirect(`/?token=${accessToken}`);
   } catch (error) {
     logger.error('Auth callback error:', error);
     res.status(500).json({
@@ -261,6 +256,57 @@ router.post('/token', requiresAuth(), (req, res) => {
     res.status(500).json({
       success: false,
       error: 'Token generation failed',
+    });
+  }
+});
+
+/**
+ * GET /auth/token
+ * Get current user's JWT token (for Bearer authentication)
+ */
+router.get('/token', requiresAuth(), (req, res) => {
+  try {
+    const user = req.oidc.user;
+    
+    // Check if token exists in session
+    if (req.session && req.session.accessToken) {
+      return res.json({
+        success: true,
+        accessToken: req.session.accessToken,
+        tokenType: 'Bearer',
+        expiresIn: '24h',
+      });
+    }
+
+    // Generate new token if not in session
+    const tokenPayload = {
+      sub: user.sub,
+      email: user.email,
+      name: user.name,
+      picture: user.picture,
+      roles: user['https://sso-gateway.com/roles'] || [],
+      permissions: user['https://sso-gateway.com/permissions'] || [],
+    };
+
+    const accessToken = generateToken(tokenPayload);
+    
+    // Store in session for future requests
+    if (req.session) {
+      req.session.accessToken = accessToken;
+    }
+    
+    res.json({
+      success: true,
+      accessToken,
+      tokenType: 'Bearer',
+      expiresIn: '24h',
+      user: tokenPayload,
+    });
+  } catch (error) {
+    logger.error('Token retrieval error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Token retrieval failed',
     });
   }
 });

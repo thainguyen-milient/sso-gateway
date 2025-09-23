@@ -74,6 +74,7 @@ app.use(cookieParser());
 
 // Session middleware with proper store for production
 const session = require('express-session');
+const { cookie } = require('express-validator');
 
 // Import session store utility
 let sessionStore;
@@ -121,7 +122,9 @@ const config = {
   },
   session: {
     rollingDuration: 24 * 60 * 60, // 24 hours
-    cookieDomain: '.receipt-flow.io.vn',
+    cookie: {
+      domain: '.receipt-flow.io.vn', // Adjust domain as needed
+    }
   },
 };
 

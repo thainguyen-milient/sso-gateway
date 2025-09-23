@@ -154,10 +154,10 @@ const config = {
   session: {
     rollingDuration: 24 * 60 * 60, // 24 hours
     absoluteDuration: 7 * 24 * 60 * 60, // 7 days
-    cookieDomain: '.receipt-flow.io.vn',
     cookie: {
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'Lax',
+      domain: '.receipt-flow.io.vn', // Adjust domain as needed
     },
   },
   routes: {

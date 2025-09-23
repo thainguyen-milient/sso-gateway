@@ -142,7 +142,7 @@ const config = {
   routes: {
     login: false, // We'll handle this manually
     logout: false, // We'll handle this manually
-    callback: false, // We'll handle this manually
+    callback: '/auth/callback', // Let Auth0 middleware handle the callback
   },
 };
 

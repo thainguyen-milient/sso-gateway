@@ -25,11 +25,11 @@ router.get('/login', (req, res) => {
   
   // Store return URL in session
   req.session.returnTo = returnTo;
-  console.log('ReturnTo URL:', `${process.env.BASE_URL}/auth/callback`);
+  console.log('Redirect URI for Auth0:', `${process.env.BASE_URL}/auth/callback`);
   res.oidc.login({
-    returnTo: '/auth/callback',
+    returnTo: '/', // Redirect to the root of the app AFTER successful login and callback processing.
     authorizationParams: {
-      redirect_uri: `${process.env.BASE_URL}/auth/callback`,
+      redirect_uri: `${process.env.BASE_URL}/auth/callback`, // This MUST match the URL in Auth0 dashboard.
       scope: 'openid profile email',
       audience: process.env.AUTH0_AUDIENCE,
     },
@@ -42,6 +42,8 @@ router.get('/login', (req, res) => {
  * This route acts as a post-callback processor
  */
 router.get('/callback', requiresAuth(), async (req, res) => {
+  // The Auth0 middleware will handle the authentication
+  // and make the user available via req.oidc.user
   try {
     const user = req.oidc.user;
     // Safely access session properties

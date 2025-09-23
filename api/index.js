@@ -92,7 +92,7 @@ app.use(session({
   saveUninitialized: false,
   cookie: { 
     secure: true,
-    sameSite: 'none',
+    sameSite: 'None',
     maxAge: 24 * 60 * 60 * 1000,
     domain: '.receipt-flow.io.vn',
     httpOnly: true
@@ -139,7 +139,7 @@ const config = {
     absoluteDuration: 7 * 24 * 60 * 60, // 7 days
     cookie: {
       secure: true,
-      sameSite: 'none',
+      sameSite: 'None',
       httpOnly: true,
       maxAge: 24 * 60 * 60 * 1000, // 24 hours
       domain: '.receipt-flow.io.vn'

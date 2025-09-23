@@ -195,7 +195,7 @@ app.get('/auth/sso-callback', (req, res) => {
     res.cookie('access_token', token, {
       httpOnly: true,
       secure: true,
-      sameSite: 'none',
+      sameSite: 'None',
       maxAge: 24 * 60 * 60 * 1000, // 24 hours,
       domain: '.receipt-flow.io.vn'
     });

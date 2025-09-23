@@ -109,7 +109,7 @@ router.get('/logout', (req, res) => {
     path: '/',
     httpOnly: true,
     secure: true,
-    sameSite: 'none',
+    sameSite: 'None',
     domain: '.receipt-flow.io.vn'
   };
   // Clear access token cookie
@@ -123,7 +123,7 @@ router.get('/logout', (req, res) => {
     path: '/',
     httpOnly: true,
     secure: true,
-    sameSite: 'none',
+    sameSite: 'None',
     domain: '.receipt-flow.io.vn'
   };
   
@@ -169,7 +169,7 @@ router.get('/global-logout', (req, res) => {
         path: '/',
         httpOnly: true,
         secure: true,
-        sameSite: 'none',
+        sameSite: 'None',
         domain: '.receipt-flow.io.vn'
       };
       

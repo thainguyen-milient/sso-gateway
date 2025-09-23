@@ -2,8 +2,101 @@ const express = require('express');
 const { verifyAuth0Token, verifyCustomToken } = require('../middleware/auth');
 const { asyncHandler } = require('../middleware/errorHandler');
 const logger = require('../utils/logger');
+const jwt = require('jsonwebtoken');
 
 const router = express.Router();
+
+/**
+ * GET /api/test-token
+ * Generate a test token for debugging JWT verification issues
+ */
+router.get('/test-token', (req, res) => {
+  // Generate a test token
+  const token = jwt.sign(
+    { 
+      sub: 'test-user',
+      email: 'test@example.com',
+      name: 'Test User',
+      productId: 'pluriell'
+    }, 
+    process.env.JWT_SECRET,
+    { 
+      expiresIn: '1h',
+      issuer: 'sso-gateway-test'
+    }
+  );
+  
+  res.json({ 
+    token,
+    message: 'This is a test token for debugging purposes',
+    jwt_secret_preview: process.env.JWT_SECRET ? process.env.JWT_SECRET.substring(0, 5) + '...' : 'not set',
+    node_env: process.env.NODE_ENV || 'not set'
+  });
+});
+
+/**
+ * POST /api/verify-token
+ * Test token verification endpoint
+ */
+router.post('/verify-token', (req, res) => {
+  const { token } = req.body;
+  
+  if (!token) {
+    return res.status(400).json({
+      success: false,
+      error: 'No token provided'
+    });
+  }
+  
+  try {
+    // Decode without verification
+    const decoded = jwt.decode(token, { complete: true });
+    
+    // Try to verify
+    try {
+      const verified = jwt.verify(token, process.env.JWT_SECRET);
+      
+      res.json({
+        success: true,
+        message: 'Token is valid',
+        decoded: {
+          header: decoded.header,
+          payload: {
+            sub: verified.sub,
+            email: verified.email,
+            name: verified.name,
+            iss: verified.iss,
+            iat: new Date(verified.iat * 1000).toISOString(),
+            exp: new Date(verified.exp * 1000).toISOString(),
+            productId: verified.productId
+          }
+        }
+      });
+    } catch (verifyError) {
+      res.status(401).json({
+        success: false,
+        message: 'Token verification failed',
+        error: verifyError.message,
+        decoded: decoded ? {
+          header: decoded.header,
+          payload: {
+            sub: decoded.payload.sub,
+            email: decoded.payload.email,
+            iss: decoded.payload.iss,
+            iat: decoded.payload.iat ? new Date(decoded.payload.iat * 1000).toISOString() : null,
+            exp: decoded.payload.exp ? new Date(decoded.payload.exp * 1000).toISOString() : null
+          }
+        } : null
+      });
+    }
+  } catch (error) {
+    res.status(400).json({
+      success: false,
+      message: 'Invalid token format',
+      error: error.message
+    });
+  }
+});
 
 /**
  * GET /api/validate-token
@@ -218,6 +311,39 @@ router.post('/webhook/auth0', asyncHandler(async (req, res) => {
   res.status(200).json({
     success: true,
     message: 'Webhook processed successfully',
+  });
+}));
+
+/**
+ * POST /api/global-logout
+ * Initiate a global logout across all connected applications
+ */
+router.post('/global-logout', asyncHandler(async (req, res) => {
+  const { returnTo } = req.body;
+  
+  // Get all connected product URLs
+  const connectedProducts = [
+    process.env.PLURIELL_URL || 'https://pluriell.receipt-flow.io.vn',
+    process.env.RECEIPT_URL || 'https://receipt-flow.io.vn',
+    // Add other products as needed
+  ];
+  
+  console.log('API global logout initiated');
+  
+  // Clear all possible token cookies
+  res.clearCookie('access_token');
+  res.clearCookie('sso_token');
+  res.clearCookie('id_token');
+  res.clearCookie('auth_token');
+  
+  // Return the logout URL that the client should redirect to
+  const logoutUrl = `${process.env.BASE_URL}/auth/logout?global=true&returnTo=${encodeURIComponent(returnTo || process.env.BASE_URL)}`;
+  
+  res.json({
+    success: true,
+    message: 'Global logout initiated',
+    logoutUrl,
+    connectedProducts
   });
 }));
 

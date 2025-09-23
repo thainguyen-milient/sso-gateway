@@ -117,19 +117,47 @@ router.get('/callback', requiresAuth(), async (req, res) => {
 /**
  * GET /auth/logout
  * Logout user and clear session
+ * Supports global logout across all connected applications
  */
 router.get('/logout', (req, res) => {
   const returnTo = req.query.returnTo || process.env.BASE_URL;
+  const isGlobalLogout = req.query.global === 'true';
   
-  // Clear access token cookie
+  // Clear all possible token cookies
   res.clearCookie('access_token');
+  res.clearCookie('sso_token');
+  res.clearCookie('id_token');
+  res.clearCookie('auth_token');
   
   // Log user out
-  console.log('User logged out', {
+  console.log(`User logged out (${isGlobalLogout ? 'global' : 'local'} logout)`, {
     userId: req.oidc.user?.sub,
     email: req.oidc.user?.email,
+    returnTo
   });
 
+  // If this is a global logout, we need to handle logout for all connected applications
+  if (isGlobalLogout) {
+    // Get all connected product URLs
+    const connectedProducts = [
+      process.env.PLURIELL_URL || 'https://pluriell.receipt-flow.io.vn',
+      process.env.RECEIPT_URL || 'https://receipt-flow.io.vn',
+      // Add other products as needed
+    ];
+    
+    console.log('Global logout initiated - will clear sessions across all products');
+    
+    // For global logout, we'll use Auth0's federated logout feature
+    // This will clear the Auth0 session and all connected applications
+    return res.oidc.logout({
+      returnTo,
+      // The federated parameter tells Auth0 to perform a federated logout
+      // This will clear the session with the identity provider (Auth0)
+      federated: true
+    });
+  }
+  
+  // For regular logout, just clear the local session
   res.oidc.logout({
     returnTo,
   });

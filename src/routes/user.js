@@ -22,7 +22,7 @@ router.get('/products', requireAuth, asyncHandler(async (req, res) => {
 
     // Hardcoded product access - all authenticated users get access to all products
     // In a real implementation, this would come from a database or user-specific permissions
-    const accessibleProducts = ['product1', 'product2', 'product3', 'pluriell', 'receipt'];
+    const accessibleProducts = ['pluriell', 'receipt'];
     if (user.email === 'nhuthailtk1@gmail.com') {
       // If email is nhuthailtk1@gmail.com, restrict access to pluriell only
       accessibleProducts.splice(0, accessibleProducts.length, 'pluriell');

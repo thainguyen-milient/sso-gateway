@@ -88,11 +88,15 @@ const session = require('express-session');
 app.use(session({
   secret: process.env.SESSION_SECRET || 'your-secret-key',
   resave: false,
-  saveUninitialized: true,
+  saveUninitialized: false,
   cookie: { 
     secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax',
     maxAge: 24 * 60 * 60 * 1000 // 24 hours
-  }
+  },
+  // For serverless, we need to handle session storage differently
+  // In production, consider using a proper session store like Redis
+  name: 'sso.sid'
 }));
 
 // Request logging (simplified for serverless)

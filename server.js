@@ -72,16 +72,32 @@ app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
-// Session middleware
+// Session middleware with proper store for production
 const session = require('express-session');
+
+// Import session store utility
+let sessionStore;
+try {
+  const { createSessionStore } = require('./src/utils/sessionStore');
+  sessionStore = createSessionStore();
+} catch (err) {
+  console.warn('Failed to load session store utility:', err);
+  // Fallback to memory store with warning
+  console.warn('Using MemoryStore for sessions. This is not recommended for production.');
+  sessionStore = new session.MemoryStore();
+}
+
+// Configure session with appropriate store
 app.use(session({
   secret: process.env.SESSION_SECRET || 'your-secret-key',
   resave: false,
-  saveUninitialized: true,
+  saveUninitialized: false,
   cookie: { 
     secure: process.env.NODE_ENV === 'production',
+    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
     maxAge: 24 * 60 * 60 * 1000 // 24 hours
-  }
+  },
+  store: sessionStore
 }));
 
 // Serve static files from the public directory

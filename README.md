@@ -505,6 +505,12 @@ volumes:
    - Verify Redis connection if using Redis sessions
    - Check cookie settings for cross-domain
 
+5. **Memory Store Warning in Production**
+   - This error occurs because the default MemoryStore is not suitable for production
+   - Set up Redis by adding REDIS_URL environment variable
+   - For Vercel deployment, use Upstash Redis or similar service
+   - The application includes fallback to MemoryStore but with warnings
+
 ### Debugging
 
 Enable debug logging:

@@ -82,9 +82,12 @@ In your Vercel project dashboard, go to **Settings** → **Environment Variables
 | `ALLOWED_ORIGINS` | `https://your-project.vercel.app,https://product1.vercel.app` | CORS allowed origins |
 | `LOG_LEVEL` | `info` | Logging level |
 | `RATE_LIMIT_MAX_REQUESTS` | `200` | Rate limit per window |
+| `REDIS_URL` | `redis://username:password@host:port` | Redis connection URL for session storage |
 | `PRODUCT1_URL` | `https://product1.vercel.app` | Product 1 URL |
 | `PRODUCT2_URL` | `https://product2.vercel.app` | Product 2 URL |
 | `PRODUCT3_URL` | `https://product3.vercel.app` | Product 3 URL |
+| `PLURIELL_URL` | `https://pluriell.receipt-flow.io.vn` | Pluriell URL |
+| `RECEIPT_URL` | `https://receipt-flow.io.vn` | Receipt Flow URL |
 
 ### Generate Secrets
 
@@ -174,8 +177,24 @@ https://your-project.vercel.app
 ### 4. Session Storage
 
 - No persistent file system
-- Sessions stored in memory (lost on cold start)
-- Consider external session store (Redis) for production
+- Sessions stored in memory (lost on cold start) - this will cause warnings
+- **Recommended: Use Redis for session storage**
+
+#### Setting up Redis for Session Storage
+
+1. **Create a Redis instance**
+   - Sign up for [Upstash Redis](https://upstash.com/) (serverless Redis, works well with Vercel)
+   - Or use any Redis provider (Redis Labs, AWS ElastiCache, etc.)
+
+2. **Get your Redis connection URL**
+   - Format: `redis://username:password@host:port`
+
+3. **Add to Vercel environment variables**
+   - Add `REDIS_URL` with your Redis connection string
+
+4. **Redeploy your application**
+   - The app will automatically use Redis for session storage when `REDIS_URL` is present
+   - You'll no longer see the MemoryStore warnings
 
 ## Environment-Specific Configuration
 
@@ -256,6 +275,12 @@ Adjusted for serverless environment:
 - Implement health check warming
 - Optimize function size
 - Use lighter dependencies
+
+**5. MemoryStore Warning**
+- Error message: `Warning: connect.session() MemoryStore is not designed for a production environment`
+- Solution: Configure Redis by adding `REDIS_URL` environment variable
+- Temporary workaround: Ignore the warning (it won't break functionality)
+- This warning appears because the default session store is not persistent across serverless function invocations
 
 ### Debug Commands
 

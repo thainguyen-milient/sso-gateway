@@ -85,19 +85,39 @@ app.use(cookieParser());
 
 // Session middleware for serverless environment
 const session = require('express-session');
-app.use(session({
+
+// Import session store utility
+let sessionStore;
+try {
+  const { createSessionStore } = require('../src/utils/sessionStore');
+  sessionStore = createSessionStore();
+} catch (err) {
+  console.warn('Failed to load session store utility:', err);
+  // Fallback to memory store with warning
+  console.warn('Using MemoryStore for sessions. This is not recommended for production.');
+  sessionStore = new session.MemoryStore();
+}
+
+// Use a more production-ready session store if available
+let sessionConfig = {
   secret: process.env.SESSION_SECRET || 'your-secret-key',
   resave: false,
   saveUninitialized: false,
   cookie: { 
     secure: process.env.NODE_ENV === 'production',
-    sameSite: 'lax',
+    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
     maxAge: 24 * 60 * 60 * 1000 // 24 hours
   },
-  // For serverless, we need to handle session storage differently
-  // In production, consider using a proper session store like Redis
-  name: 'sso.sid'
-}));
+  name: 'sso.sid',
+  store: sessionStore
+};
+
+// In production, we need to set secure cookies
+if (process.env.NODE_ENV === 'production') {
+  sessionConfig.cookie.secure = true;
+}
+
+app.use(session(sessionConfig));
 
 // Request logging (simplified for serverless)
 app.use((req, res, next) => {
@@ -159,10 +179,24 @@ app.get('/health', (req, res) => {
   });
 });
 
-// Routes
-app.use('/auth', authRoutes);
-app.use('/api', apiRoutes);
-app.use('/user', userRoutes);
+// Routes - ensure all route objects are properly initialized
+if (typeof authRoutes === 'function' || (authRoutes && typeof authRoutes === 'object' && authRoutes.handle && authRoutes.set)) {
+  app.use('/auth', authRoutes);
+} else {
+  console.error('Auth routes is not a valid Express router:', typeof authRoutes);
+}
+
+if (typeof apiRoutes === 'function' || (apiRoutes && typeof apiRoutes === 'object' && apiRoutes.handle && apiRoutes.set)) {
+  app.use('/api', apiRoutes);
+} else {
+  console.error('API routes is not a valid Express router:', typeof apiRoutes);
+}
+
+if (typeof userRoutes === 'function' || (userRoutes && typeof userRoutes === 'object' && userRoutes.handle && userRoutes.set)) {
+  app.use('/user', userRoutes);
+} else {
+  console.error('User routes is not a valid Express router:', typeof userRoutes);
+}
 
 // API info endpoint (moved from root to avoid conflict with static files)
 app.get('/api', (req, res) => {

@@ -146,6 +146,7 @@ const config = {
   clientID: process.env.AUTH0_CLIENT_ID,
   issuerBaseURL: `https://${process.env.AUTH0_DOMAIN}`,
   clientSecret: process.env.AUTH0_CLIENT_SECRET,
+  cookieDomain: '.receipt-flow.io.vn',
   authorizationParams: {
     response_type: 'code',
     audience: process.env.AUTH0_AUDIENCE,

@@ -5,6 +5,7 @@ const compression = require('compression');
 const cookieParser = require('cookie-parser');
 const rateLimit = require('express-rate-limit');
 const { auth } = require('express-openid-connect');
+require('dotenv').config();
 
 // Import utilities and routes
 const logger = require('../src/utils/logger');
@@ -81,6 +82,18 @@ app.use(limiter);
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
+
+// Session middleware for serverless environment
+const session = require('express-session');
+app.use(session({
+  secret: process.env.SESSION_SECRET || 'your-secret-key',
+  resave: false,
+  saveUninitialized: true,
+  cookie: { 
+    secure: process.env.NODE_ENV === 'production',
+    maxAge: 24 * 60 * 60 * 1000 // 24 hours
+  }
+}));
 
 // Request logging (simplified for serverless)
 app.use((req, res, next) => {
@@ -174,5 +187,8 @@ app.use('*', (req, res) => {
 // Error handling middleware
 app.use(errorHandler);
 
-// Export the Express app for Vercel
+// For Vercel serverless functions, export the Express app
 module.exports = app;
+
+// Export the handler function that Vercel expects
+module.exports.default = app;

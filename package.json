@@ -11,7 +11,9 @@
     "lint": "eslint src/",
     "lint:fix": "eslint src/ --fix",
     "vercel:dev": "vercel dev",
-    "vercel:deploy": "vercel --prod"
+    "vercel:deploy": "vercel --prod",
+    "vercel:env": "node scripts/setup-vercel-env.js",
+    "vercel:prepare": "node scripts/generate-secrets.js"
   },
   "keywords": [
     "sso",

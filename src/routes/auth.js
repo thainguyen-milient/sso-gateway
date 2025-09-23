@@ -72,10 +72,10 @@ router.get('/callback', requiresAuth(), async (req, res) => {
     // Set token as HTTP-only cookie with domain configuration for cross-subdomain sharing
     const cookieOptions = {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+      secure: true,
+      sameSite: 'none',
       maxAge: 24 * 60 * 60 * 1000, // 24 hours
-      domain: process.env.NODE_ENV === 'production' ? '.receipt-flow.io.vn' : undefined,
+      domain: '.receipt-flow.io.vn',
     };
     
     res.cookie('access_token', accessToken, cookieOptions);

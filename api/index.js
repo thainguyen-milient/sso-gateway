@@ -164,8 +164,8 @@ app.use('/auth', authRoutes);
 app.use('/api', apiRoutes);
 app.use('/user', userRoutes);
 
-// Root endpoint
-app.get('/', (req, res) => {
+// API info endpoint (moved from root to avoid conflict with static files)
+app.get('/api', (req, res) => {
   res.json({
     message: 'SSO Gateway API - Vercel Deployment',
     version: '1.0.0',

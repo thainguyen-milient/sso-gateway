@@ -162,7 +162,7 @@ router.get('/logout', (req, res) => {
     httpOnly: true,
     secure: true,
     sameSite: 'none',
-    domain: 'receipt-flow.io.vn',
+    domain: '.receipt-flow.io.vn',
     path: '/'
   };
 
@@ -170,7 +170,7 @@ router.get('/logout', (req, res) => {
     httpOnly: false,
     secure: true,
     sameSite: 'none',
-    domain: 'receipt-flow.io.vn',
+    domain: '.receipt-flow.io.vn',
     path: '/'
   };
   
@@ -179,7 +179,7 @@ router.get('/logout', (req, res) => {
     httpOnly: true,
     secure: true,
     sameSite: 'none',
-    domain: 'pluriell.receipt-flow.io.vn',
+    domain: '.receipt-flow.io.vn',
     path: '/'
   };
 
@@ -187,7 +187,7 @@ router.get('/logout', (req, res) => {
     httpOnly: false,
     secure: true,
     sameSite: 'none',
-    domain: 'pluriell.receipt-flow.io.vn',
+    domain: '.receipt-flow.io.vn',
     path: '/'
   };
 

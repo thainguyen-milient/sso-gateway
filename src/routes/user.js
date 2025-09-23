@@ -31,7 +31,7 @@ router.get('/products', requireAuth, asyncHandler(async (req, res) => {
     // Map products to their details
     const productDetails = accessibleProducts.map(productId => {
       const productUrls = {
-        'product1': process.env.PRODUCT1_URL || 'http://localhost:3001/auth/login',
+        'receipt': process.env.RECEIPT_URL || 'https://receipt-flow.io.vn/auth/login',
         'product2': process.env.PRODUCT2_URL || 'http://localhost:3004',
         'product3': process.env.PRODUCT3_URL || 'http://localhost:3003',
         'pluriell': process.env.PLURIELL_URL || 'http://localhost:3002/auth/login',

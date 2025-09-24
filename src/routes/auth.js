@@ -52,6 +52,10 @@ router.get('/callback', requiresAuth(), async (req, res) => {
     // Safely access session properties
     const productId = req.session?.productId;
     const returnTo = req.session?.returnTo || '/';
+
+    console.log('User authenticated:', user);
+    console.log('Product ID from session:', productId);
+    console.log('Return URL from session:', returnTo);
     
     logger.info('User authenticated successfullyy', {
       userId: user.sub,

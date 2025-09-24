@@ -69,13 +69,25 @@ router.get('/callback', requiresAuth(), async (req, res) => {
 
     const accessToken = generateToken(tokenPayload);
     
-    // Store token in session for later retrieval
-    if (req.session) {
-      req.session.accessToken = accessToken;
-    }
+    // Set token as HTTP-only cookie with enhanced cross-subdomain sharing
+    const cookieOptions = {
+      httpOnly: true,
+      secure: true,
+      sameSite: 'None',
+      maxAge: 24 * 60 * 60 * 1000, // 24 hours
+      domain: '.receipt-flow.io.vn',
+    };
+    
+    res.cookie('access_token', accessToken, cookieOptions);
 
-    // Clear session data if session exists
+    // Store user data in session for cross-subdomain sharing
     if (req.session) {
+      req.session.user = tokenPayload;
+      req.session.accessToken = accessToken;
+      req.session.authenticated = true;
+      req.session.loginTime = new Date().toISOString();
+      
+      // Clear temporary session data
       delete req.session.productId;
       delete req.session.returnTo;
     }
@@ -86,8 +98,7 @@ router.get('/callback', requiresAuth(), async (req, res) => {
       return res.redirect(productRedirectUrl);
     }
 
-    // For direct SSO Gateway access, redirect to dashboard with token
-    res.redirect(`/?token=${accessToken}`);
+    res.redirect(returnTo);
   } catch (error) {
     logger.error('Auth callback error:', error);
     res.status(500).json({
@@ -261,52 +272,71 @@ router.post('/token', requiresAuth(), (req, res) => {
 });
 
 /**
- * GET /auth/token
- * Get current user's JWT token (for Bearer authentication)
+ * GET /auth/session
+ * Get current user session data for cross-subdomain sharing
  */
-router.get('/token', requiresAuth(), (req, res) => {
+router.get('/session', (req, res) => {
   try {
-    const user = req.oidc.user;
-    
-    // Check if token exists in session
-    if (req.session && req.session.accessToken) {
+    // Check if user is authenticated via Auth0 session
+    if (req.oidc.isAuthenticated()) {
+      const user = req.oidc.user;
+      
+      // Generate or retrieve token
+      let accessToken = req.session?.accessToken;
+      if (!accessToken) {
+        const tokenPayload = {
+          sub: user.sub,
+          email: user.email,
+          name: user.name,
+          picture: user.picture,
+          roles: user['https://sso-gateway.com/roles'] || [],
+          permissions: user['https://sso-gateway.com/permissions'] || [],
+        };
+        accessToken = generateToken(tokenPayload);
+        
+        if (req.session) {
+          req.session.accessToken = accessToken;
+          req.session.user = tokenPayload;
+        }
+      }
+      
       return res.json({
         success: true,
-        accessToken: req.session.accessToken,
-        tokenType: 'Bearer',
-        expiresIn: '24h',
+        authenticated: true,
+        user: req.session?.user || {
+          sub: user.sub,
+          email: user.email,
+          name: user.name,
+          picture: user.picture,
+        },
+        accessToken,
+        sessionId: req.sessionID,
+        loginTime: req.session?.loginTime,
       });
     }
-
-    // Generate new token if not in session
-    const tokenPayload = {
-      sub: user.sub,
-      email: user.email,
-      name: user.name,
-      picture: user.picture,
-      roles: user['https://sso-gateway.com/roles'] || [],
-      permissions: user['https://sso-gateway.com/permissions'] || [],
-    };
-
-    const accessToken = generateToken(tokenPayload);
     
-    // Store in session for future requests
-    if (req.session) {
-      req.session.accessToken = accessToken;
+    // Check if user has session data but no Auth0 session
+    if (req.session && req.session.authenticated && req.session.user) {
+      return res.json({
+        success: true,
+        authenticated: true,
+        user: req.session.user,
+        accessToken: req.session.accessToken,
+        sessionId: req.sessionID,
+        loginTime: req.session.loginTime,
+      });
     }
     
     res.json({
       success: true,
-      accessToken,
-      tokenType: 'Bearer',
-      expiresIn: '24h',
-      user: tokenPayload,
+      authenticated: false,
+      user: null,
     });
   } catch (error) {
-    logger.error('Token retrieval error:', error);
+    logger.error('Session retrieval error:', error);
     res.status(500).json({
       success: false,
-      error: 'Token retrieval failed',
+      error: 'Session retrieval failed',
     });
   }
 });

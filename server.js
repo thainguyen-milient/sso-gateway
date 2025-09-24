@@ -77,25 +77,40 @@ app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
-// Session middleware
+// Session middleware with enhanced cross-subdomain sharing
 const session = require('express-session');
-const { http } = require('winston');
+const MongoStore = require('connect-mongo');
+
 const sessionConfig = {
   secret: process.env.SESSION_SECRET || 'your-secret-key',
   resave: false,
-  saveUninitialized: true,
+  saveUninitialized: false, // Don't create session until something stored
+  name: 'sso_session', // Custom session name for better identification
   cookie: { 
-    secure: true,
-    sameSite: 'none',
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: process.env.NODE_ENV === 'production' ? 'None' : 'lax',
     maxAge: 24 * 60 * 60 * 1000, // 24 hours
-    domain: '.receipt-flow.io.vn',
     httpOnly: true,
-  }
+  },
+  // Enable session rolling to extend expiration on activity
+  rolling: true,
 };
 
 // In production, set domain for cross-subdomain session sharing
 if (process.env.NODE_ENV === 'production') {
   sessionConfig.cookie.domain = '.receipt-flow.io.vn';
+}
+
+// Use MongoDB session store for production (if available)
+if (process.env.MONGODB_SESSION_URL) {
+  sessionConfig.store = MongoStore.create({
+    mongoUrl: process.env.MONGODB_SESSION_URL,
+    touchAfter: 24 * 3600, // lazy session update
+    ttl: 24 * 60 * 60, // 24 hours
+  });
+  logger.info('Using MongoDB session store');
+} else {
+  logger.warn('Using memory session store - not recommended for production');
 }
 
 app.use(session(sessionConfig));

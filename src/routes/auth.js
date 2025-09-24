@@ -1,7 +1,10 @@
 const express = require('express');
-const { requiresAuth } = require('express-openid-connect');
-const { generateToken } = require('../middleware/auth');
+const jwt = require('jsonwebtoken');
+const { requiresAuth } = require('@auth0/express-openid-connect');
 const logger = require('../utils/logger');
+const crypto = require('crypto');
+const axios = require('axios');
+const { generateToken } = require('../middleware/auth');
 
 const router = express.Router();
 
@@ -72,11 +75,16 @@ router.get('/callback', requiresAuth(), async (req, res) => {
     // Set token as HTTP-only cookie with enhanced cross-subdomain sharing
     const cookieOptions = {
       httpOnly: true,
-      secure: true,
-      sameSite: 'None',
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: process.env.NODE_ENV === 'production' ? 'None' : 'lax',
       maxAge: 24 * 60 * 60 * 1000, // 24 hours
-      domain: '.receipt-flow.io.vn',
+      path: '/',
     };
+    
+    // Set domain for cross-subdomain sharing in production
+    if (process.env.NODE_ENV === 'production') {
+      cookieOptions.domain = '.receipt-flow.io.vn';
+    }
     
     res.cookie('access_token', accessToken, cookieOptions);
 
@@ -92,10 +100,21 @@ router.get('/callback', requiresAuth(), async (req, res) => {
       delete req.session.returnTo;
     }
 
-    // Redirect based on product or return URL
+    // Implement back-channel handoff for sub-products
     if (productId) {
-      const productRedirectUrl = getProductRedirectUrl(productId, accessToken);
-      return res.redirect(productRedirectUrl);
+      try {
+        const handoffResult = await performBackChannelHandoff(productId, tokenPayload, returnTo);
+        if (handoffResult.success) {
+          // Redirect to sub-product with one-time code
+          return res.redirect(handoffResult.redirectUrl);
+        } else {
+          logger.error('Back-channel handoff failed:', handoffResult.error);
+          return res.redirect(`${returnTo}?error=handoff_failed`);
+        }
+      } catch (error) {
+        logger.error('Back-channel handoff error:', error);
+        return res.redirect(`${returnTo}?error=handoff_error`);
+      }
     }
 
     res.redirect(returnTo);
@@ -342,6 +361,84 @@ router.get('/session', (req, res) => {
 });
 
 /**
+ * GET /auth/token-from-session
+ * Get access token from session for sub-products
+ */
+router.get('/token-from-session', (req, res) => {
+  try {
+    // Check if user has active session with access token
+    if (req.session && req.session.authenticated && req.session.accessToken) {
+      return res.json({
+        success: true,
+        accessToken: req.session.accessToken,
+        user: req.session.user,
+        sessionId: req.sessionID,
+        loginTime: req.session.loginTime,
+      });
+    }
+    
+    // Check if user is authenticated via Auth0 but no session token
+    if (req.oidc.isAuthenticated()) {
+      const user = req.oidc.user;
+      
+      // Generate new token and store in session
+      const tokenPayload = {
+        sub: user.sub,
+        email: user.email,
+        name: user.name,
+        picture: user.picture,
+        roles: user['https://sso-gateway.com/roles'] || [],
+        permissions: user['https://sso-gateway.com/permissions'] || [],
+      };
+      
+      const accessToken = generateToken(tokenPayload);
+      
+      // Store in session
+      if (req.session) {
+        req.session.user = tokenPayload;
+        req.session.accessToken = accessToken;
+        req.session.authenticated = true;
+        req.session.loginTime = new Date().toISOString();
+      }
+      
+      // Also set as cookie for direct access
+      const cookieOptions = {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: process.env.NODE_ENV === 'production' ? 'None' : 'lax',
+        maxAge: 24 * 60 * 60 * 1000, // 24 hours
+        path: '/',
+      };
+      
+      if (process.env.NODE_ENV === 'production') {
+        cookieOptions.domain = '.receipt-flow.io.vn';
+      }
+      
+      res.cookie('access_token', accessToken, cookieOptions);
+      
+      return res.json({
+        success: true,
+        accessToken,
+        user: tokenPayload,
+        sessionId: req.sessionID,
+        loginTime: req.session.loginTime,
+      });
+    }
+    
+    res.status(401).json({
+      success: false,
+      error: 'No active session or authentication',
+    });
+  } catch (error) {
+    logger.error('Token from session error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to retrieve token from session',
+    });
+  }
+});
+
+/**
  * GET /auth/status
  * Check authentication status
  */
@@ -374,6 +471,125 @@ function getProductRedirectUrl(productId, accessToken) {
 
   const baseUrl = productUrls[productId] || process.env.BASE_URL;
   return `${baseUrl}/auth/sso-callback?token=${accessToken}`;
+}
+
+/**
+ * Back-channel handoff implementation
+ * Securely transfers authentication to sub-products without exposing tokens to browser
+ */
+async function performBackChannelHandoff(productId, userPayload, returnTo) {
+  try {
+    // Get product configuration
+    const productConfig = getProductConfig(productId);
+    if (!productConfig) {
+      throw new Error(`Unknown product: ${productId}`);
+    }
+
+    // Generate a short-lived, product-specific token
+    const productToken = generateProductToken(userPayload, productConfig);
+    
+    // Generate one-time code for browser redirect
+    const oneTimeCode = crypto.randomBytes(32).toString('hex');
+    
+    // Create JWS (JSON Web Signature) for server-to-server communication
+    const jws = createJWS({
+      token: productToken,
+      user: userPayload,
+      code: oneTimeCode,
+      exp: Math.floor(Date.now() / 1000) + 300, // 5 minutes
+      iss: 'sso-gateway',
+      aud: productConfig.audience
+    });
+
+    // Make server-to-server call to product's session endpoint
+    const sessionResponse = await axios.post(`${productConfig.baseUrl}/api/sessions`, {
+      jws: jws,
+      user: userPayload,
+      code: oneTimeCode
+    }, {
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${process.env.SSO_GATEWAY_SECRET}`,
+        'X-SSO-Gateway': 'true'
+      },
+      timeout: 5000 // 5 second timeout
+    });
+
+    if (sessionResponse.status === 200 && sessionResponse.data.success) {
+      // Success - redirect browser to product with one-time code
+      const redirectUrl = `${productConfig.baseUrl}/auth/callback?code=${oneTimeCode}`;
+      
+      logger.info('Back-channel handoff successful', {
+        productId,
+        userId: userPayload.sub,
+        redirectUrl
+      });
+
+      return {
+        success: true,
+        redirectUrl
+      };
+    } else {
+      throw new Error(`Product session creation failed: ${sessionResponse.status}`);
+    }
+
+  } catch (error) {
+    logger.error('Back-channel handoff failed', {
+      productId,
+      userId: userPayload.sub,
+      error: error.message
+    });
+
+    return {
+      success: false,
+      error: error.message
+    };
+  }
+}
+
+/**
+ * Get product configuration for back-channel handoff
+ */
+function getProductConfig(productId) {
+  const configs = {
+    'pluriell': {
+      baseUrl: process.env.NODE_ENV === 'production' 
+        ? 'https://pluriell.receipt-flow.io.vn' 
+        : 'http://localhost:3002',
+      audience: 'pluriell-api'
+    },
+    'receipt': {
+      baseUrl: process.env.NODE_ENV === 'production' 
+        ? 'https://receipt.receipt-flow.io.vn' 
+        : 'http://localhost:3001',
+      audience: 'receipt-api'
+    }
+  };
+
+  return configs[productId];
+}
+
+/**
+ * Generate product-specific JWT token
+ */
+function generateProductToken(userPayload, productConfig) {
+  return jwt.sign({
+    ...userPayload,
+    aud: productConfig.audience,
+    iss: 'sso-gateway'
+  }, process.env.JWT_SECRET, {
+    expiresIn: '1h'
+  });
+}
+
+/**
+ * Create JWS (JSON Web Signature) for secure server-to-server communication
+ */
+function createJWS(payload) {
+  return jwt.sign(payload, process.env.SSO_GATEWAY_SECRET, {
+    algorithm: 'HS256',
+    expiresIn: '5m'
+  });
 }
 
 module.exports = router;

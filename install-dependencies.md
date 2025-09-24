@@ -1,6 +1,6 @@
 # Install Missing Dependencies
 
-The SSO Gateway is missing the `@auth0/express-openid-connect` package and some other dependencies for the back-channel handoff implementation.
+The SSO Gateway is missing the `express-openid-connect` package and some other dependencies for the back-channel handoff implementation.
 
 ## Run this command to install all dependencies:
 
@@ -12,14 +12,14 @@ npm install
 ## If you need to install specific missing packages:
 
 ```bash
-npm install @auth0/express-openid-connect@^2.17.1
+npm install express-openid-connect@^2.17.1
 npm install connect-mongo@^5.1.0
 ```
 
 ## Verify installation:
 
 ```bash
-npm list @auth0/express-openid-connect
+npm list express-openid-connect
 npm list connect-mongo
 ```
 
@@ -34,7 +34,7 @@ If npm install doesn't work, you can manually verify that your `package.json` in
 ```json
 {
   "dependencies": {
-    "@auth0/express-openid-connect": "^2.17.1",
+    "express-openid-connect": "^2.17.1",
     "connect-mongo": "^5.1.0",
     // ... other dependencies
   }

@@ -1,6 +1,6 @@
 const express = require('express');
 const jwt = require('jsonwebtoken');
-const { requiresAuth } = require('@auth0/express-openid-connect');
+const { requiresAuth } = require('express-openid-connect');
 const logger = require('../utils/logger');
 const crypto = require('crypto');
 const axios = require('axios');
